@@ -1,0 +1,21 @@
+//
+//  SMGPrefixHeader.pch
+//  SMG_NothingIsAll
+//
+//  Created by 贾  on 2017/5/3.
+//  Copyright © 2017年 XiaoGang. All rights reserved.
+//
+
+#import <Availability.h>
+
+
+#ifdef __OBJC__
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+#import "AppDelegate.h"
+#import <CoreText/CoreText.h>
+#import "SMGHeader.h"
+#endif
+
+
+#define theApp ((AppDelegate*)[[UIApplication sharedApplication] delegate])
