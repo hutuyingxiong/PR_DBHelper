@@ -90,9 +90,11 @@
             });
         }];
         
-        if (self.delegate && [self.delegate respondsToSelector:@selector(controlWindow_Log:)]) {
-            [self.delegate controlWindow_Log:STRFORMAT(@"write___%f",[[NSDate date] timeIntervalSince1970] - lastTime)];//Log2
-        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (self.delegate && [self.delegate respondsToSelector:@selector(controlWindow_Log:)]) {
+                [self.delegate controlWindow_Log:STRFORMAT(@"write___%f",[[NSDate date] timeIntervalSince1970] - lastTime)];//Log2
+            }
+        });
     });
 }
 

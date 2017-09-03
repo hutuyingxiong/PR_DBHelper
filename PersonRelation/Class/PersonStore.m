@@ -27,9 +27,8 @@
  */
 +(void) createOriPerson_KVPath:(NSInteger)count relationDensityNum:(NSInteger)relationDensityNum singleComplete:(void(^)(CGFloat progress))singleComplete{
     //1,取lastId
-    NSInteger lastId = [[NSUserDefaults standardUserDefaults] integerForKey:CreateOriPerson_LastID_KEY_KVPath];
-    NSInteger lastAILineId = [[NSUserDefaults standardUserDefaults] integerForKey:CreateOriPerson_LastID_KEY_AILine];
-    
+    NSInteger idValue = [[NSUserDefaults standardUserDefaults] integerForKey:CreateOriPerson_LastID_KEY_KVPath];
+    NSInteger aiLineIdValue = [[NSUserDefaults standardUserDefaults] integerForKey:CreateOriPerson_LastID_KEY_AILine];
     
     NSInteger progressCount = 0;//按1000个每次回收内存分段
     while (progressCount < count) {
@@ -38,16 +37,16 @@
             for (NSInteger i = 0; i < 1000; i++) {
                 //2.1,生成随机名字 & idStr
                 NSString *nameStr = [Utils createName];
-                NSString *idStr = [Utils getIdStrWithIdValue:++lastId];
+                NSString *idStr = [Utils getIdStrWithIdValue:idValue];
                 
                 //2.2,生成dic
                 AIPointer *pointer = [[AIPointer alloc] initWithString:STRTOOK(idStr)];
                 AIDictionary *dic = [[AIDictionary alloc] initWithDictionary:@{@"Id":STRTOOK(idStr),@"Name":STRTOOK(nameStr)} withPointer:pointer];
                 
                 //2.3,生成关系
-                if (random() % MAX(0, relationDensityNum) == 0) {
+                if (relationDensityNum != 0 && idValue > 0 && random() % MAX(0, relationDensityNum) == 0) {
                     //1. 生成relationId
-                    NSInteger relationId = random() % lastId;
+                    NSInteger relationId = random() % idValue;
                     
                     //2. 生成relationPointer
                     NSString *relationIdStr = [Utils getIdStrWithIdValue:relationId];
@@ -58,12 +57,13 @@
                     AILine *line = AIMakeLine(pointers, AILineType_X);
                     
                     //4. 创建AILinePointer
-                    NSString *aiLineIdStr = [Utils getAILineIdStrWithIdValue:++lastAILineId];
+                    NSString *aiLineIdStr = [Utils getAILineIdStrWithIdValue:aiLineIdValue];
                     AIPointer *aiLinePointer = [[AIPointer alloc] initWithString:STRTOOK(aiLineIdStr)];
                     line.pointer = aiLinePointer;
                     
                     //5. 存AILine
                     [AIStore store_Insert:line];
+                    aiLineIdValue++;
                     
                     //6. relation插网线
                     AIObject *relationObj = [self getPerson_KVPathWithPointer:relationPointer];
@@ -76,8 +76,9 @@
                     [dic connectLine:line save:false];
                 }
                 
-                //2.4,存储
+                //2.4,存储当前dic
                 [[[PINDiskCache alloc] initWithName:@"" rootPath:pointer.filePath] setObject:dic forKey:pointer.fileName];
+                idValue ++;
                 
                 //2.5,计数器++
                 progressCount ++;
@@ -85,18 +86,16 @@
                 //2.6,回调
                 if (singleComplete) singleComplete((CGFloat)(progressCount)/(CGFloat)count);
                 
-                //2.7,检查完成
+                //2.7,检查完成 & 1000存1次idValue;
                 if (progressCount >= count) {
+                    [[NSUserDefaults standardUserDefaults] setInteger:idValue forKey:CreateOriPerson_LastID_KEY_KVPath];
+                    [[NSUserDefaults standardUserDefaults] setInteger:aiLineIdValue forKey:CreateOriPerson_LastID_KEY_AILine];
+                    [[NSUserDefaults standardUserDefaults] synchronize];
                     break;
                 }
             }
         }
     }
-    
-    //3,存lastId
-    [[NSUserDefaults standardUserDefaults] setInteger:lastId forKey:CreateOriPerson_LastID_KEY_KVPath];
-    [[NSUserDefaults standardUserDefaults] setInteger:lastAILineId forKey:CreateOriPerson_LastID_KEY_AILine];
-    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 
